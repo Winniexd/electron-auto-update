@@ -10,6 +10,7 @@ function createWindow() {
   win.loadFile('index.html');
 }
 
+autoUpdater.setFeedURL(process.env.UPDATE_SERVER_URL);
 app.whenReady().then(() => {
   createWindow();
 
