@@ -13,20 +13,31 @@
   "license": "ISC",
   "author": "",
   "type": "commonjs",
-  "main": "main.js",
+  "main": "out/main/index.mjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "electron-builder --config build.config.mjs",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build && electron-builder --config build.config.mjs",
+    "preview": "electron-vite preview",
     "publish": "electron-builder --publish always"
   },
   "devDependencies": {
     "@electron/fuses": "^1.8.0",
+    "@tailwindcss/vite": "^4.2.4",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
     "electron": "^41.2.1",
-    "electron-builder": "^26.8.1"
+    "electron-builder": "^26.8.1",
+    "electron-vite": "^5.0.0",
+    "vite": "^8.0.10"
   },
   "dependencies": {
+    "@nephroflow/design-system": "^0.57.1",
     "electron-log": "^5.4.3",
     "electron-squirrel-startup": "^1.0.1",
-    "electron-updater": "^6.8.3"
+    "electron-updater": "^6.8.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tailwindcss": "^4.2.4"
   }
 }

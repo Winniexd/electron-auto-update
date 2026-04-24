@@ -1,0 +1,4 @@
+@import "@nephroflow/design-system/css/tailwind.config.css";
+
+/* Needed for `tailwindcss` tree-shaking */
+@source "../node_modules/@nephroflow/design-system/src";

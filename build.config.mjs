@@ -9,6 +9,7 @@ export default {
 
   appId: pkg.name,
   productName: pkg.description,
+  files: ["out/**/*", "package.json"],
 
   mac: {
     target: [{ target: "default", arch: "universal" }],
