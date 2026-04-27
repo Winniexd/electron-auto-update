@@ -1,49 +1,49 @@
 import { Button } from "@nephroflow/design-system/components/button";
 import { ModalDialog } from "@nephroflow/design-system/components/modal-dialog";
 import { useState } from "react";
+import versionInfo from '../package.json'
 
 export function App() {
-  enum EChannel {
+  enum eChannel {
     STABLE = "stable",
-    PREVIEW = "preview",
+    PREVIEW = "pre",
   }
 
   type UpdateInfoType = {
     version: string;
-    channel: EChannel;
+    channel: eChannel;
     releaseDate: string;
   };
 
-  const [version, setVersion] = useState("1.0.0");
   const [updateInfo, setUpdateInfo] = useState<
-    Record<EChannel, UpdateInfoType | null>
-  >({ [EChannel.STABLE]: null, [EChannel.PREVIEW]: null });
+    Record<eChannel, UpdateInfoType | null>
+  >({ [eChannel.STABLE]: null, [eChannel.PREVIEW]: null });
   const [stableUpdateAvailable, setStableUpdateAvailable] = useState(false);
   const [previewUpdateAvailable, setPreviewUpdateAvailable] = useState(false);
-  const [channel, setChannel] = useState<EChannel>(EChannel.STABLE);
+  const [channel, setChannel] = useState<eChannel>(eChannel.STABLE);
 
   window.bridgeIpc.onUpdateAvailable(
-    (data: Record<EChannel, UpdateInfoType>) => {
+    (data: Record<eChannel, UpdateInfoType>) => {
       console.log(data);
       console.log(updateInfo)
       if (
-        data.hasOwnProperty(EChannel.PREVIEW) &&
-        (!updateInfo || !updateInfo[EChannel.PREVIEW])
+        data[eChannel.PREVIEW].version &&
+        (!updateInfo || !updateInfo[eChannel.PREVIEW])
       ) {
         setPreviewUpdateAvailable(true);
         setUpdateInfo((prev) => ({
           ...prev,
-          [EChannel.PREVIEW]: data[EChannel.PREVIEW],
+          [eChannel.PREVIEW]: data[eChannel.PREVIEW],
         }));
       }
       if (
-        data.hasOwnProperty("stable") &&
-        (!updateInfo || !updateInfo[EChannel.STABLE])
+        data[eChannel.STABLE].version &&
+        (!updateInfo || !updateInfo[eChannel.STABLE])
       ) {
         setStableUpdateAvailable(true);
         setUpdateInfo((prev) => ({
           ...prev,
-          [EChannel.STABLE]: data[EChannel.STABLE],
+          [eChannel.STABLE]: data[eChannel.STABLE],
         }));
       }
     },
@@ -53,21 +53,21 @@ export function App() {
     <>
       <div className="w-screen h-screen">
         <div className="flex flex-col h-full justify-center items-center gap-10">
-          <h1>Current version: {version}</h1>
+          <h1>Current version: {versionInfo.version}</h1>
 
           <ModalDialog>
             <ModalDialog.Trigger>
               <div className="flex gap-2">
                 <Button
                   disabled={!previewUpdateAvailable}
-                  onClick={() => setChannel(EChannel.PREVIEW)}
+                  onClick={() => setChannel(eChannel.PREVIEW)}
                 >
                   Pre
                 </Button>
                 <Button
                   disabled={!stableUpdateAvailable}
                   importance="secondary"
-                  onClick={() => setChannel(EChannel.STABLE)}
+                  onClick={() => setChannel(eChannel.STABLE)}
                 >
                   Stable
                 </Button>
@@ -78,7 +78,7 @@ export function App() {
                 <ModalDialog.Title>Update confirmation</ModalDialog.Title>
               </ModalDialog.Header>
               <ModalDialog.Body>
-                You're about to update from version {version} to {updateInfo[channel]?.version || "N/A"}. Download
+                You're about to update from version {versionInfo.version} to {updateInfo[channel]?.version || "N/A"}. Download
                 update?
               </ModalDialog.Body>
               <ModalDialog.Footer>
@@ -89,7 +89,7 @@ export function App() {
                     </Button>
                   </ModalDialog.Close>
                   <ModalDialog.Close>
-                    <Button importance="primary" meaning="neutral">
+                    <Button onClick={() => window.bridgeIpc.downloadUpdate(channel === "stable"? "latest": "pre")} importance="primary" meaning="neutral">
                       Confirm
                     </Button>
                   </ModalDialog.Close>

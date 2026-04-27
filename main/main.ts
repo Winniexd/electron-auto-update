@@ -1,15 +1,13 @@
 import {
   ProgressInfo,
   UpdateDownloadedEvent,
+  UpdateInfo,
 } from "electron-updater";
-import yaml from 'js-yaml'
-import os from 'os'
 import { app, BrowserWindow, ipcMain } from "electron";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
 import path from "path";
 
-const platform = os.platform() === "win32" ? "win32": "mac"
 log.transports.file.level = "debug";
 autoUpdater.logger = log;
 autoUpdater.autoDownload = false;
@@ -38,19 +36,13 @@ function createWindow() {
 
 let interval: NodeJS.Timeout;
 
-function switchChannels() {
-  autoUpdater.channel = autoUpdater.channel === "pre" ? "latest": "pre"
-}
-
-let updates = {};
+let updates = {"stable": {}, "pre": {}};
 async function checkForUpdates() {
-  const stableRes = await fetch(`http://127.0.0.1:8080/latest-${platform}.yml`).then(r => r.text())
-  const previewRes = await fetch(`http://127.0.0.1:8080/pre-${platform}.yml`).then(r => r.text())
-  if (stableRes || previewRes) {
-    const stable = yaml.load(stableRes)
-    const preview = yaml.load(previewRes)
-    win.webContents.send("update-available", {stable, preview});
-  }
+  autoUpdater.channel = "latest"
+  await autoUpdater.checkForUpdates()
+  autoUpdater.channel = "pre"
+  await autoUpdater.checkForUpdates()
+  win.webContents.send("update-available", updates)
 }
 
 function enable() {
@@ -61,7 +53,9 @@ function disable() {
   clearInterval(interval);
 }
 
-function downloadUpdate() {
+async function downloadUpdate(event: any, channel: "latest" | "pre") {
+  autoUpdater.channel = channel
+  autoUpdater.downloadUpdate()
 }
 
 app.whenReady().then(() => {
@@ -75,6 +69,11 @@ app.whenReady().then(() => {
 autoUpdater.on("error", () => {
   log.info("Error");
 });
+
+autoUpdater.on("update-available", (e: UpdateInfo) => {
+  const channel = e.version.endsWith("pre") ? "pre": "stable"
+  updates[channel] = e;
+})
 
 autoUpdater.on("update-downloaded", (e: UpdateDownloadedEvent) => {
   win.webContents.send("download-finished", e);
