@@ -1,10 +1,9 @@
-window.addEventListener("DOMContentLoaded", () => {
-  const replaceText = (selector: any, text: any) => {
-    const element = document.getElementById(selector);
-    if (element) element.innerText = text;
-  };
+import { contextBridge, ipcRenderer } from "electron";
 
-  for (const type of ["chrome", "node", "electron"]) {
-    replaceText(`${type}-version`, process.versions[type]);
-  }
+console.log("IPC LOADED")
+contextBridge.exposeInMainWorld("bridgeIpc", {
+  downloadUpdate: () => ipcRenderer.invoke("download-update", null),
+  onDownloadProgressUpdate: (callback: any) => ipcRenderer.on("download-progress-update", (_, data) => callback(data)),
+  onDownloadFinished: (callback: any) => ipcRenderer.on("download-finished", (_, data) => callback(data)),
+  onUpdateAvailable: (callback: any) => ipcRenderer.on("update-available", (_, data) => callback(data)),
 });
