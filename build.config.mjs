@@ -10,6 +10,11 @@ export default {
   appId: pkg.name,
   productName: pkg.description,
   files: ["out/**/*", "package.json"],
+  publish: {
+    "provider": "generic",
+    "url": "http://127.0.0.1:8080"
+  },
+  generateUpdatesFilesForAllChannels: true,
 
   mac: {
     target: [{ target: "default", arch: "universal" }],
