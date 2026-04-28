@@ -22,7 +22,7 @@ export function App() {
   const [previewUpdateAvailable, setPreviewUpdateAvailable] = useState(false);
   const [downloadState, setDownloadState] = useState<
     "idle" | "downloading" | "finished" | "error"
-  >("downloading");
+  >("idle");
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [channel, setChannel] = useState<eChannel>(eChannel.STABLE);
 
