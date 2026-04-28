@@ -1,3 +1,4 @@
+import { version } from "react";
 import pkg from "./package.json" with { type: "json" };
 
 /**
@@ -33,6 +34,7 @@ export default {
   },
   win: {
     target: ["nsis"],
+    artifactName: `${pkg.description}-Setup-${pkg.version}.exe`
   },
   nsis: {
     oneClick: false,
