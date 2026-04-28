@@ -1,7 +1,7 @@
 import { Button } from "@nephroflow/design-system/components/button";
 import { ModalDialog } from "@nephroflow/design-system/components/modal-dialog";
 import { useState } from "react";
-import versionInfo from '../package.json'
+import versionInfo from "../package.json";
 
 export function App() {
   enum eChannel {
@@ -20,12 +20,16 @@ export function App() {
   >({ [eChannel.STABLE]: null, [eChannel.PREVIEW]: null });
   const [stableUpdateAvailable, setStableUpdateAvailable] = useState(false);
   const [previewUpdateAvailable, setPreviewUpdateAvailable] = useState(false);
+  const [downloadState, setDownloadState] = useState<
+    "idle" | "downloading" | "finished" | "error"
+  >("downloading");
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [channel, setChannel] = useState<eChannel>(eChannel.STABLE);
 
   window.bridgeIpc.onUpdateAvailable(
     (data: Record<eChannel, UpdateInfoType>) => {
       console.log(data);
-      console.log(updateInfo)
+      console.log(updateInfo);
       if (
         data[eChannel.PREVIEW].version &&
         (!updateInfo || !updateInfo[eChannel.PREVIEW])
@@ -48,6 +52,15 @@ export function App() {
       }
     },
   );
+
+  window.bridgeIpc.onDownloadProgressUpdate((downloadPercent: number) => {
+    setDownloadState("downloading");
+    setDownloadProgress(downloadPercent);
+  });
+
+  window.bridgeIpc.onDownloadFinished(() => {
+    setDownloadState("finished");
+  });
 
   return (
     <>
@@ -78,8 +91,8 @@ export function App() {
                 <ModalDialog.Title>Update confirmation</ModalDialog.Title>
               </ModalDialog.Header>
               <ModalDialog.Body>
-                You're about to update from version {versionInfo.version} to {updateInfo[channel]?.version || "N/A"}. Download
-                update?
+                You're about to update from version {versionInfo.version} to{" "}
+                {updateInfo[channel]?.version || "N/A"}. Download update?
               </ModalDialog.Body>
               <ModalDialog.Footer>
                 <ModalDialog.FooterButtons>
@@ -89,7 +102,15 @@ export function App() {
                     </Button>
                   </ModalDialog.Close>
                   <ModalDialog.Close>
-                    <Button onClick={() => window.bridgeIpc.downloadUpdate(channel === "stable"? "latest": "pre")} importance="primary" meaning="neutral">
+                    <Button
+                      onClick={() =>
+                        window.bridgeIpc.downloadUpdate(
+                          channel === "stable" ? "latest" : "pre",
+                        )
+                      }
+                      importance="primary"
+                      meaning="neutral"
+                    >
                       Confirm
                     </Button>
                   </ModalDialog.Close>
@@ -97,6 +118,23 @@ export function App() {
               </ModalDialog.Footer>
             </ModalDialog.Content>
           </ModalDialog>
+          <div>
+            {downloadState === "downloading" && (
+              <div>
+                <progress className="pr-2" value={downloadProgress}></progress>
+                <span>{downloadProgress}</span>
+              </div>
+            )}
+            {downloadState === "finished" && (
+              <div className="flex flex-col">
+                <span>Download complete! Restart the app and install?</span>
+                <div className="flex justify-center gap-2 pt-2">
+                  <Button importance="secondary">Later</Button>
+                  <Button onClick={() => window.bridgeIpc.installUpdate()} importance="primary">Restart</Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>

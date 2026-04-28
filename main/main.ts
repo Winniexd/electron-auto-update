@@ -11,7 +11,10 @@ import path from "path";
 log.transports.file.level = "debug";
 autoUpdater.logger = log;
 autoUpdater.autoDownload = false;
-autoUpdater.channel = "pre";
+autoUpdater.allowPrerelease = false;
+autoUpdater.allowDowngrade = false;
+log.debug(autoUpdater.currentVersion)
+log.debug(autoUpdater.getFeedURL())
 
 let win: BrowserWindow;
 
@@ -36,12 +39,17 @@ function createWindow() {
 
 let interval: NodeJS.Timeout;
 
-let updates = {"stable": {}, "pre": {}};
+let updates: Record<"pre" | "stable", any> = { pre: {}, stable: {} };
 async function checkForUpdates() {
   autoUpdater.channel = "latest"
+  autoUpdater.allowDowngrade = false
   await autoUpdater.checkForUpdates()
+  //updates["stable"] = await autoUpdater.checkForUpdates().then(r => r?.updateInfo)
+
   autoUpdater.channel = "pre"
+  autoUpdater.allowDowngrade = false
   await autoUpdater.checkForUpdates()
+  //updates["pre"] = await autoUpdater.checkForUpdates().then(r => r?.updateInfo)
   win.webContents.send("update-available", updates)
 }
 
@@ -55,13 +63,21 @@ function disable() {
 
 async function downloadUpdate(event: any, channel: "latest" | "pre") {
   autoUpdater.channel = channel
+  autoUpdater.allowDowngrade = false;
+  // autoUpdater.allowPrerelease = (channel === "pre");
+  autoUpdater.checkForUpdates()
   autoUpdater.downloadUpdate()
+}
+
+function installUpdate() {
+  autoUpdater.quitAndInstall();
 }
 
 app.whenReady().then(() => {
   enable();
-  ipcMain.handle("check-for-updates", () => {return updates});
+  ipcMain.handle("check-for-updates", () => { return updates });
   ipcMain.handle("download-update", downloadUpdate);
+  ipcMain.handle("install-update", installUpdate);
   createWindow();
   win.webContents.openDevTools();
 });
@@ -71,7 +87,8 @@ autoUpdater.on("error", () => {
 });
 
 autoUpdater.on("update-available", (e: UpdateInfo) => {
-  const channel = e.version.endsWith("pre") ? "pre": "stable"
+  log.error(`VERSION TO DOWNLOAD: ${e.version}`)
+  const channel = e.version.includes("pre") ? "pre": "stable"
   updates[channel] = e;
 })
 
@@ -80,5 +97,10 @@ autoUpdater.on("update-downloaded", (e: UpdateDownloadedEvent) => {
 });
 
 autoUpdater.on("download-progress", (e: ProgressInfo) => {
-  win.webContents.send("download-progress-update", e);
+  win.webContents.send("download-progress-update", e.percent);
 });
+
+autoUpdater.on("update-not-available", (e: UpdateInfo) => {
+  log.debug("UPDATE NOT AVAILABLE")
+  log.debug(e)
+})

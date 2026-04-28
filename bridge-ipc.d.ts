@@ -1,4 +1,4 @@
-export {}
+export {};
 
 declare global {
   interface Window {
@@ -7,6 +7,7 @@ declare global {
       onDownloadProgressUpdate: (cb: (data: any) => void) => void;
       onDownloadFinished: (cb: (data: any) => void) => void;
       onUpdateAvailable: (cb: (data: any) => void) => void;
+      installUpdate: () => Promise<any>;
     };
   }
 }
